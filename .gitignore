@@ -1,0 +1,46 @@
+# Ebonveil
+#
+# Philosophy: track reproducibility (manifest, profiles, tools, docs).
+# Never track mod binaries, downloads, or secrets.
+
+# --- Secrets / local env ---
+# Nexus key is read from env NEXUS_API_KEY or secrets/nexus_api_key.txt (ADR 0010).
+# .env is not used by any script, but stays ignored as a defensive net.
+.env
+.env.*
+*.apikey
+nexus_api_key.txt
+secrets/
+
+# --- Caches ---
+.cache/
+*.log
+Thumbs.db
+Desktop.ini
+
+# --- MO2 portable binary tree (bootstrap regenerates) ---
+# Allowlist approach: ignore mo2/** then un-ignore profiles & tracked configs.
+mo2/**
+!mo2/profiles/
+!mo2/profiles/**
+# Live ModOrganizer.ini is machine-specific + rewritten by MO2 constantly; track the
+# sanitized template instead and regenerate via tools/configure-mo2.ps1 (ADR 0009).
+!mo2/ModOrganizer.ini.template
+!mo2/categories.dat
+!mo2/explorer++.ini
+!mo2/portable.txt
+
+# --- MO2 downloads selection cache (local) ---
+mo2/downloads/.ebonveil-resolved.json
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Temp extraction ---
+*.tmp
+*.7z
+!tools/**/*.ps1

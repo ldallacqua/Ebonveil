@@ -1,0 +1,90 @@
+; Ebonveil sanitized MO2 instance template (committed).
+; The live mo2/ModOrganizer.ini is generated from this file by tools/configure-mo2.ps1
+; and is intentionally gitignored (MO2 rewrites it with machine-specific absolute paths
+; and volatile GUI geometry on every exit). See docs/decisions/0009-mo2-ini-template.md.
+;
+; Tokens replaced by the generator:
+;   {{GAME_PATH_BS}}     game path, backslash-escaped for @ByteArray  (C:\\Steam\\...)
+;   {{GAME_PATH_FS}}     game path, forward-slash form                (C:/Steam/...)
+;   {{INSTANCE_PATH_FS}} this instance's mo2 dir, forward-slash form  (C:/Modding/Ebonveil/mo2)
+;
+; The SKSE custom executable is NOT defined here on purpose; tools/install-m1.ps1 injects it
+; with correct per-machine paths so restores stay path-portable.
+[General]
+gameName=Skyrim Special Edition
+gamePath=@ByteArray({{GAME_PATH_BS}})
+selected_profile=@ByteArray(Default)
+version=2.5.2
+first_start=false
+game_edition=Steam
+
+[Settings]
+language=en
+archivesInit=true
+load_mechanism=0
+hide_unchecked_plugins=false
+force_enable_core_files=true
+display_mod_problems=true
+check_for_updates=true
+use_prereleases=false
+profile_local_inis=true
+profile_local_saves=false
+profile_archive_invalidation=false
+show_change_game_confirmation=true
+double_click_previews=true
+display_foreign=true
+log_level=1
+crash_dumps_type=1
+crash_dumps_max=5
+loot_log_level=2
+endorsement_integration=true
+tracked_integration=true
+category_mappings=true
+lock_gui=true
+offline_mode=false
+use_proxy=false
+
+[Plugins]
+architecture=0
+RootBuilder\copyfiles=**
+RootBuilder\linkfiles=
+RootBuilder\usvfsfiles=
+RootBuilder\exclusions="Saves,Morrowind.ini,Data,Data Files,Data,Data Files"
+RootBuilder\hash=true
+RootBuilder\migrated=true
+
+[customExecutables]
+size=3
+1\arguments=
+1\binary={{GAME_PATH_FS}}/SkyrimSE.exe
+1\hide=false
+1\ownicon=true
+1\steamAppID=
+1\title=Skyrim Special Edition
+1\toolbar=false
+1\workingDirectory={{GAME_PATH_FS}}
+2\arguments=
+2\binary={{GAME_PATH_FS}}/SkyrimSELauncher.exe
+2\hide=false
+2\ownicon=true
+2\steamAppID=
+2\title=Skyrim Special Edition Launcher
+2\toolbar=false
+2\workingDirectory={{GAME_PATH_FS}}
+3\arguments=\"{{GAME_PATH_BS}}\\data\"
+3\binary={{INSTANCE_PATH_FS}}/explorer++/Explorer++.exe
+3\hide=false
+3\ownicon=true
+3\steamAppID=
+3\title=Explore Virtual Folder
+3\toolbar=false
+3\workingDirectory={{INSTANCE_PATH_FS}}/explorer++
+
+[recentDirectories]
+size=0
+
+[Servers]
+size=0
+
+[pluginBlacklist]
+size=0

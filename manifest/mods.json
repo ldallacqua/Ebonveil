@@ -1,0 +1,81 @@
+{
+  "$schema": "./mods.schema.json",
+  "game": "skyrimspecialedition",
+  "gamePath": "C:\\Steam\\steamapps\\common\\Skyrim Special Edition",
+  "notes": "M1 essentials. Nexus-first (ADR 0005). File selection is runtime-dynamic (ADR 0006) — never pin fileIds.",
+  "mods": [
+    {
+      "id": "root-builder",
+      "name": "Root Builder",
+      "source": "nexus",
+      "nexus": {
+        "domain": "skyrimspecialedition",
+        "modId": 31720,
+        "url": "https://www.nexusmods.com/skyrimspecialedition/mods/31720"
+      },
+      "selection": {
+        "platformAware": false,
+        "matchGameVersion": false
+      },
+      "install": "mo2-mod",
+      "required": true,
+      "milestone": "M1",
+      "notes": "Latest MAIN. MO2 plugin (tools/install-m1.ps1 extracts into mo2/plugins)."
+    },
+    {
+      "id": "skse64",
+      "name": "Skyrim Script Extender (SKSE64)",
+      "source": "nexus",
+      "nexus": {
+        "domain": "skyrimspecialedition",
+        "modId": 30379,
+        "url": "https://www.nexusmods.com/skyrimspecialedition/mods/30379"
+      },
+      "selection": {
+        "platformAware": true,
+        "matchGameVersion": true
+      },
+      "install": "root-builder-or-root-mod",
+      "required": true,
+      "milestone": "M1",
+      "notes": "Detect Skyrim runtime + Steam/GOG, list Nexus MAIN files, pick latest matching platform (exclude GOG on Steam). Prefer name/desc hit on game version when present."
+    },
+    {
+      "id": "address-library",
+      "name": "Address Library for SKSE Plugins",
+      "source": "nexus",
+      "nexus": {
+        "domain": "skyrimspecialedition",
+        "modId": 32444,
+        "url": "https://www.nexusmods.com/skyrimspecialedition/mods/32444",
+        "fileNameInclude": ["All in one"]
+      },
+      "selection": {
+        "platformAware": false,
+        "matchGameVersion": false
+      },
+      "install": "mo2-mod",
+      "required": true,
+      "milestone": "M1",
+      "notes": "Prefer latest 'All in one' MAIN (contains per-runtime bins). Soft name include, not a version pin."
+    },
+    {
+      "id": "skyui",
+      "name": "SkyUI",
+      "source": "nexus",
+      "nexus": {
+        "domain": "skyrimspecialedition",
+        "modId": 12604,
+        "url": "https://www.nexusmods.com/skyrimspecialedition/mods/12604"
+      },
+      "selection": {
+        "platformAware": false,
+        "matchGameVersion": false
+      },
+      "install": "mo2-mod",
+      "required": true,
+      "milestone": "M1",
+      "notes": "Latest MAIN. Requires SKSE. Enable SkyUI_SE.esp."
+    }
+  ]
+}

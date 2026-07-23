@@ -1,0 +1,24 @@
+{
+  "$comment": "Informational schema for manifest/mods.json — not enforced at runtime yet.",
+  "type": "object",
+  "required": ["game", "mods"],
+  "properties": {
+    "game": { "type": "string" },
+    "gamePath": { "type": "string" },
+    "mods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "source", "install"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "source": { "enum": ["nexus", "silverlock", "github", "manual"] },
+          "install": { "enum": ["mo2-mod", "root-builder-or-root-mod", "manual"] },
+          "required": { "type": "boolean" },
+          "milestone": { "type": "string" }
+        }
+      }
+    }
+  }
+}
