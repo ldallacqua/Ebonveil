@@ -21,9 +21,9 @@ behind these scripts live in `docs/decisions/` (ADRs); this file is the operatio
 4. **`meta.ini` `gameName=SkyrimSE`** (short name), not the display name. (ADR 0008)
 5. **Never pin Nexus `fileId` / archive names.** Select latest compatible MAIN dynamically.
    (ADR 0006)
-6. **Place mods under MO2 separators by `category`.** Use `Add-Mo2ModToModlist` /
-   `Update-Mo2ModlistPlacements`; separator order lives in `manifest/separators.json`.
-   (ADR 0014)
+6. **Place mods under MO2 separators by `category`.** Insert the mod **before** its
+   separator line (`Add-Mo2ModToModlist`). Order + DLC/CC groups: `manifest/separators.json`.
+   Call `Sync-Mo2ManagedSeparators` for managed DLC/CC. (ADR 0014)
 
 ## Shared libraries (`tools/lib/`)
 
@@ -41,8 +41,9 @@ Dot-source, don't duplicate. If you need MO2 process/ini/7-Zip behavior, use the
 | `Confirm-Mo2Ini -RepoRoot -GamePath` | Generate live ini from template if missing (cold restore). |
 | `Add-Mo2Executable -Ini -Title -Binary -WorkingDir [-Arguments] [-SteamAppID] [-Select]` | Idempotent (by title) custom-executable registration. Handles `[customExecutables]` as last section. |
 | `Ensure-Mo2Separator -ModsDir -Name` | Create empty `<Name>_separator` mod folder + meta.ini. |
-| `Add-Mo2ModToModlist -ProfileDir -ModsDir -ModName -Separator [-RepoRoot]` | Place/enable a mod under its separator (creates separator, canonical order). (ADR 0014) |
+| `Add-Mo2ModToModlist -ProfileDir -ModsDir -ModName -Separator [-RepoRoot]` | Place/enable a mod **before** its separator line (MO2 nests higher-priority mods under the separator). (ADR 0014) |
 | `Update-Mo2ModlistPlacements -ProfileDir -ModsDir -Placements [-RepoRoot]` | Batch place mods: each item `{ Name; Separator }`. |
+| `Sync-Mo2ManagedSeparators -ProfileDir -ModsDir [-RepoRoot]` | Put `*Creation Club:*` / `*DLC:*` under Creation Club / Official DLC separators. |
 
 ### `Ebonveil.Nexus.ps1`
 | Function | Purpose |

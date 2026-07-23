@@ -1,17 +1,19 @@
 {
   "$schema": "./separators.schema.json",
-  "notes": "MO2 left-pane separators (folders named '<Name>_separator'). Order is top→bottom in modlist.txt (highest priority first). Mods are placed under the separator matching their manifest category (ADR 0014).",
+  "notes": "MO2 left-pane separators. Order = modlist.txt top→bottom = HIGHEST priority first = BOTTOM of the UI (Overwrite is last). A separator owns mods listed BEFORE it in the file. UI top→bottom is the reverse: Official DLC → Creation Club → … → User Interface → Overwrite. See ADR 0014.",
   "order": [
+    "Patches & Compatibility",
+    "NSFW",
+    "Romance",
+    "Gameplay",
+    "Immersion",
+    "Graphics",
     "User Interface",
     "Frameworks & Resources",
     "Script Extender & Core",
     "Tooling",
-    "Graphics",
-    "Immersion",
-    "Gameplay",
-    "Romance",
-    "NSFW",
-    "Patches & Compatibility",
-    "Other Mods"
+    "Other Mods",
+    "Creation Club",
+    "Official DLC"
   ]
 }

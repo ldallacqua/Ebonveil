@@ -186,9 +186,11 @@ function Add-Mo2Executable {
 }
 
 # --- Separators (ADR 0014) ---------------------------------------------------
-# MO2 separators are empty mods named '<Display>_separator'. In modlist.txt, mods
-# listed under a separator (after it, before the next separator) belong to that group.
-# Caller must ensure MO2 is NOT running when writing modlist.txt.
+# MO2: first line of modlist.txt = HIGHEST priority = BOTTOM of the left pane
+# (Overwrite is always last/highest). A separator owns the mods listed BEFORE it in
+# the file (higher priority / closer to Overwrite), up to the previous separator.
+# Visually those mods nest under the separator header. Caller must ensure MO2 is
+# NOT running when writing modlist.txt.
 
 function Get-Mo2SeparatorFolderName {
   param([Parameter(Mandatory)][string]$Name)
@@ -202,7 +204,10 @@ function Get-Mo2SeparatorOrder {
   if (-not $RepoRoot) { $RepoRoot = (Get-Mo2Paths).Root }
   $path = Join-Path $RepoRoot 'manifest\separators.json'
   if (-not (Test-Path -LiteralPath $path)) {
-    return @('User Interface', 'Frameworks & Resources', 'Script Extender & Core', 'Other Mods')
+    return @(
+      'User Interface', 'Frameworks & Resources', 'Script Extender & Core',
+      'Creation Club', 'Official DLC'
+    )
   }
   $cfg = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
   return @($cfg.order)
@@ -241,15 +246,50 @@ function Ensure-Mo2Separator {
   return $folder
 }
 
+function Get-Mo2ModlistEntryName {
+  param([string]$Line)
+  if ([string]::IsNullOrWhiteSpace($Line)) { return $null }
+  if ($Line[0] -in @('+', '-', '*')) { return $Line.Substring(1) }
+  return $null
+}
+
+function Get-Mo2SeparatorInsertIndex {
+  # Where a new separator line should go. Separators appear AFTER their children in
+  # the file. Insert after the previous separator's children block.
+  param(
+    [System.Collections.Generic.List[string]]$Lines,
+    [string]$SeparatorFolder,
+    [string[]]$Order
+  )
+  $wantName = $SeparatorFolder -replace '_separator$', ''
+  $wantRank = [array]::IndexOf(@($Order), $wantName)
+  if ($wantRank -lt 0) { $wantRank = $Order.Count }
+
+  $best = -1
+  for ($i = 0; $i -lt $Lines.Count; $i++) {
+    $n = Get-Mo2ModlistEntryName -Line $Lines[$i]
+    if (-not $n -or -not $n.EndsWith('_separator')) { continue }
+    $disp = $n -replace '_separator$', ''
+    $rank = [array]::IndexOf(@($Order), $disp)
+    if ($rank -lt 0) { $rank = $Order.Count }
+    if ($rank -lt $wantRank) { $best = $i }
+  }
+
+  if ($best -ge 0) {
+    return ($best + 1)  # immediately after the previous separator line
+  }
+  return 0
+}
+
 function Add-Mo2ModToModlist {
   <#
   .SYNOPSIS
     Idempotently enable a mod under its separator in the profile modlist.txt.
   .DESCRIPTION
-    Ensures the separator folder exists, removes any prior +/- entry for the mod,
-    inserts/ensures the separator line in canonical order, and places the mod
-    immediately under that separator (after any siblings already in the section).
-    Managed (*...) and other lines below curated content are preserved.
+    MO2 nests a mod under a separator when the mod appears BEFORE the separator
+    line in modlist.txt (higher priority). This helper ensures the separator folder
+    exists, strips any prior +/- entry for the mod, ensures the separator line, and
+    inserts the mod immediately before that separator (after any siblings).
   #>
   param(
     [Parameter(Mandatory)][string]$ProfileDir,
@@ -269,7 +309,6 @@ function Add-Mo2ModToModlist {
     $raw = @(Get-Content -LiteralPath $path)
   }
 
-  # Drop comment headers + any existing entry for this mod (re-place below).
   $lines = [System.Collections.Generic.List[string]]::new()
   foreach ($line in $raw) {
     if ($line -match '^# This file was automatically') { continue }
@@ -277,7 +316,6 @@ function Add-Mo2ModToModlist {
     $lines.Add($line)
   }
 
-  # Ensure separator line exists, positioned among other separators by canonical order.
   $sepLine = "+$sepFolder"
   $hasSep = $false
   foreach ($line in $lines) {
@@ -288,85 +326,26 @@ function Add-Mo2ModToModlist {
     if ($insertAt -ge $lines.Count) { $lines.Add($sepLine) }
     else { $lines.Insert($insertAt, $sepLine) }
   } else {
-    # Normalize disabled separator → enabled
     for ($i = 0; $i -lt $lines.Count; $i++) {
       if ($lines[$i] -eq "-$sepFolder") { $lines[$i] = $sepLine }
     }
   }
 
-  # Place mod right after the last member of this separator section.
+  # Insert immediately before the separator (after any existing siblings already above it).
   $sepIdx = -1
   for ($i = 0; $i -lt $lines.Count; $i++) {
     if ($lines[$i] -eq $sepLine) { $sepIdx = $i; break }
   }
   if ($sepIdx -lt 0) { throw "Separator line missing after ensure: $sepFolder" }
 
-  $endIdx = $sepIdx + 1
-  while ($endIdx -lt $lines.Count) {
-    $n = Get-Mo2ModlistEntryName -Line $lines[$endIdx]
-    if (-not $n) { $endIdx++; continue }
-    if ($n.EndsWith('_separator')) { break }
-    if ($lines[$endIdx].StartsWith('*')) { break }  # managed content
-    $endIdx++
-  }
-
   $modLine = if ($Disabled) { "-$ModName" } else { "+$ModName" }
-  $lines.Insert($endIdx, $modLine)
+  $lines.Insert($sepIdx, $modLine)
 
   $out = [System.Collections.Generic.List[string]]::new()
   $out.Add('# This file was automatically generated by Mod Organizer / Ebonveil')
   foreach ($x in $lines) { $out.Add($x) }
   [System.IO.File]::WriteAllLines($path, $out.ToArray(), $utf8NoBom)
   Write-Host "  modlist: $ModName -> under '$Separator'"
-}
-
-function Get-Mo2ModlistEntryName {
-  param([string]$Line)
-  if ([string]::IsNullOrWhiteSpace($Line)) { return $null }
-  if ($Line[0] -in @('+', '-', '*')) { return $Line.Substring(1) }
-  return $null
-}
-
-function Get-Mo2SeparatorInsertIndex {
-  # Find where a new separator line should go: after the last existing separator that
-  # precedes it in canonical order; otherwise before the first managed (*) line /
-  # after all curated content.
-  param(
-    [System.Collections.Generic.List[string]]$Lines,
-    [string]$SeparatorFolder,
-    [string[]]$Order
-  )
-  $wantName = $SeparatorFolder -replace '_separator$', ''
-  $wantRank = [array]::IndexOf(@($Order), $wantName)
-  if ($wantRank -lt 0) { $wantRank = $Order.Count }  # unknown → after known separators
-
-  $best = -1  # index of last separator that should come before us
-  for ($i = 0; $i -lt $Lines.Count; $i++) {
-    $n = Get-Mo2ModlistEntryName -Line $Lines[$i]
-    if (-not $n -or -not $n.EndsWith('_separator')) { continue }
-    $disp = $n -replace '_separator$', ''
-    $rank = [array]::IndexOf(@($Order), $disp)
-    if ($rank -lt 0) { $rank = $Order.Count }
-    if ($rank -lt $wantRank) { $best = $i }
-  }
-
-  if ($best -ge 0) {
-    # Insert after that separator's section (before next separator / managed).
-    $j = $best + 1
-    while ($j -lt $Lines.Count) {
-      $n = Get-Mo2ModlistEntryName -Line $Lines[$j]
-      if ($n -and $n.EndsWith('_separator')) { break }
-      if ($Lines[$j].StartsWith('*')) { break }
-      $j++
-    }
-    return $j
-  }
-
-  # No preceding separator: insert before first managed line, or at start of curated.
-  for ($i = 0; $i -lt $Lines.Count; $i++) {
-    if ($Lines[$i].StartsWith('*')) { return $i }
-  }
-  return 0
 }
 
 function Update-Mo2ModlistPlacements {
@@ -384,4 +363,47 @@ function Update-Mo2ModlistPlacements {
     Add-Mo2ModToModlist -ProfileDir $ProfileDir -ModsDir $ModsDir `
       -ModName $p.Name -Separator $p.Separator -RepoRoot $RepoRoot
   }
+}
+
+function Sync-Mo2ManagedSeparators {
+  <#
+  .SYNOPSIS
+    Ensure Official DLC and Creation Club managed (*) entries sit under their separators.
+  .NOTES
+    Rebuilds the managed tail of modlist.txt: curated (+/-) content first (unchanged
+    order), then CC lines + Creation Club_separator, then DLC lines + Official DLC_separator.
+  #>
+  param(
+    [Parameter(Mandatory)][string]$ProfileDir,
+    [Parameter(Mandatory)][string]$ModsDir,
+    [string]$RepoRoot
+  )
+  $ccSep = Ensure-Mo2Separator -ModsDir $ModsDir -Name 'Creation Club'
+  $dlcSep = Ensure-Mo2Separator -ModsDir $ModsDir -Name 'Official DLC'
+  $path = Join-Path $ProfileDir 'modlist.txt'
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+  $raw = @(Get-Content -LiteralPath $path -ErrorAction SilentlyContinue)
+  $curated = [System.Collections.Generic.List[string]]::new()
+  $cc = [System.Collections.Generic.List[string]]::new()
+  $dlc = [System.Collections.Generic.List[string]]::new()
+
+  foreach ($line in $raw) {
+    if ($line -match '^# This file was automatically') { continue }
+    $n = Get-Mo2ModlistEntryName -Line $line
+    if ($n -eq $ccSep -or $n -eq $dlcSep) { continue }
+    if ($line.StartsWith('*') -and $n -like 'Creation Club:*') { $cc.Add($line); continue }
+    if ($line.StartsWith('*') -and $n -like 'DLC:*') { $dlc.Add($line); continue }
+    $curated.Add($line)
+  }
+
+  $out = [System.Collections.Generic.List[string]]::new()
+  $out.Add('# This file was automatically generated by Mod Organizer / Ebonveil')
+  foreach ($x in $curated) { $out.Add($x) }
+  foreach ($x in $cc) { $out.Add($x) }
+  $out.Add("+$ccSep")
+  foreach ($x in $dlc) { $out.Add($x) }
+  $out.Add("+$dlcSep")
+  [System.IO.File]::WriteAllLines($path, $out.ToArray(), $utf8NoBom)
+  Write-Host "  modlist: managed CC ($($cc.Count)) + DLC ($($dlc.Count)) under separators"
 }

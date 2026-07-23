@@ -56,7 +56,7 @@ Full runbook: `docs/RESTORE.md`.
 - **`meta.ini` `gameName` = game SHORT name `SkyrimSE`** (not the display "Skyrim Special Edition"), else MO2 shows "different game" (ADR 0008). Nexus API domain stays `skyrimspecialedition`.
 - **Never edit `ModOrganizer.ini` or a profile's `modlist.txt`/`plugins.txt`/`loadorder.txt` while MO2 runs** — MO2 reads them only at startup and rewrites (clobbers) them on exit (ADR 0013). Apply edits while it's closed: `pwsh -Command "& ./tools/restart-mo2.ps1 -Between { ./tools/bootstrap-tools.ps1 }"`, or use a script's `-RestartMo2` switch. Config-editing scripts refuse to run when MO2 is up.
 - **A real 7-Zip is required** (`winget install --id 7zip.7zip -e`); the WindowsApps `7z.exe` alias silently fails extraction. Scripts use shared `Find-7Zip` which skips it (ADR 0013).
-- **Place every installed mod under its MO2 separator** matching `manifest` `category` via `Add-Mo2ModToModlist` / `Update-Mo2ModlistPlacements`. Separator order: `manifest/separators.json` (ADR 0014).
+- **Place every installed mod under its MO2 separator** matching `manifest` `category` — insert the mod **before** the separator line via `Add-Mo2ModToModlist` / `Update-Mo2ModlistPlacements`. Use `Sync-Mo2ManagedSeparators` for DLC/CC. Order: `manifest/separators.json` (ADR 0014).
 
 ## Decision log
 

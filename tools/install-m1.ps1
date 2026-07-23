@@ -228,6 +228,7 @@ Update-Mo2ModlistPlacements -ProfileDir $ProfileDir -ModsDir $Mods -RepoRoot $Ro
   @{ Name = $addr; Separator = 'Frameworks & Resources' }
   @{ Name = $skse; Separator = 'Script Extender & Core' }
 )
+Sync-Mo2ManagedSeparators -ProfileDir $ProfileDir -ModsDir $Mods -RepoRoot $Root
 Update-PluginsTxt
 Update-SkseExecutable
 Write-Host '=== M1 install complete ==='
