@@ -14,6 +14,7 @@ param(
 $ErrorActionPreference = 'Stop'
 # tools/bootstrap-mo2.ps1 -> repo root is parent of tools
 $Root = Resolve-Path (Join-Path $PSScriptRoot '..')
+. (Join-Path $PSScriptRoot 'lib\Ebonveil.Mo2.ps1')   # Find-7Zip, Test-Mo2Running (shared)
 $CacheDir = Join-Path $Root '.cache'
 $Mo2Dir = Join-Path $Root 'mo2'
 $ArchiveName = "Mod.Organizer-$Version.7z"
@@ -21,17 +22,6 @@ $ArchivePath = Join-Path $CacheDir $ArchiveName
 $Url = "https://github.com/ModOrganizer2/modorganizer/releases/download/v$Version/$ArchiveName"
 
 New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
-
-function Find-7Zip {
-  $candidates = @(
-    (Get-Command 7z -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source),
-    "$env:ProgramFiles\7-Zip\7z.exe",
-    "${env:ProgramFiles(x86)}\7-Zip\7z.exe",
-    "$env:LOCALAPPDATA\Microsoft\WindowsApps\7z.exe"
-  ) | Where-Object { $_ -and (Test-Path $_) }
-  if (-not $candidates) { throw '7-Zip (7z.exe) not found. Install 7-Zip and retry.' }
-  return $candidates[0]
-}
 
 if ($Force -or -not (Test-Path $ArchivePath)) {
   Write-Host "Downloading MO2 $Version ..."
@@ -47,6 +37,8 @@ if ((Test-Path $exe) -and -not $Force) {
 }
 
 if (Test-Path $Mo2Dir) {
+  # Re-extracting deletes the mo2 tree; MO2 must be closed or file locks/undefined state result.
+  if (Test-Mo2Running) { Assert-Mo2NotRunning -ScriptHint './tools/bootstrap-mo2.ps1 -Force' }
   # Preserve user data if re-extracting.
   # portable.txt MUST survive or MO2 reverts to global-instance mode on next launch.
   # Custom plugins (e.g. plugins/rootbuilder) are intentionally NOT preserved so a version

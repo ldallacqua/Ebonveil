@@ -1,0 +1,12 @@
+{
+  "$comment": "Informational schema for manifest/separators.json.",
+  "type": "object",
+  "required": ["order"],
+  "properties": {
+    "order": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Top-to-bottom separator order in modlist.txt (highest priority first)."
+    }
+  }
+}

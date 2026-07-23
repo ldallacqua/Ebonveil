@@ -1,0 +1,42 @@
+{
+  "$comment": "Informational schema for manifest/tools.json — not enforced at runtime.",
+  "type": "object",
+  "required": ["installDir", "tools"],
+  "properties": {
+    "installDir": { "type": "string", "description": "Repo-relative install root for tool binaries (gitignored)." },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "source"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "source": { "enum": ["github", "nexus"] },
+          "github": {
+            "type": "object",
+            "properties": {
+              "repo": { "type": "string", "description": "owner/repo" },
+              "assetMatch": { "type": "string", "description": "regex matched against release asset names" }
+            }
+          },
+          "nexus": {
+            "type": "object",
+            "properties": {
+              "domain": { "type": "string" },
+              "modId": { "type": "integer" }
+            }
+          },
+          "exe": { "type": "string", "description": "Executable name hint (resolved case-insensitively after extraction)." },
+          "mo2Executable": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "args": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

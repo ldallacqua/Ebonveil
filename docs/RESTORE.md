@@ -36,7 +36,11 @@ pwsh -File .\tools\restore-mods.ps1
 # 6. Stage mods into mo2/mods and inject the SKSE launch entry (idempotent)
 pwsh -File .\tools\install-m1.ps1
 
-# 7. Launch MO2, select Skyrim SE, profile Default (or Ebonveil)
+# 7. Install modding tools (LOOT, SSEEdit, BethINI Pie) into mo2/tools and register
+#    them as MO2 executables. LOOT comes from GitHub; SSEEdit/BethINI from Nexus.
+pwsh -File .\tools\bootstrap-tools.ps1
+
+# 8. Launch MO2, select Skyrim SE, profile Default (or Ebonveil)
 .\mo2\ModOrganizer.exe
 ```
 

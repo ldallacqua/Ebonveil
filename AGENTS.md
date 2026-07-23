@@ -9,6 +9,7 @@ Skyrim Special Edition portable Mod Organizer 2 (MO2) instance, version-controll
 - **Instance root:** this repo (`C:\Modding\Ebonveil`). Non-protected path — do not move under `Program Files`, OneDrive, or controlled folders.
 - **Do not commit** `mods/`, `downloads/`, `webcache/`, binary caches, or Nexus API keys.
 - Prefer automation scripts under `tools/` over manual one-off steps. Document every decision in `docs/decisions/`.
+- **Before touching or adding automation, read `docs/AUTOMATION.md`** — the catalog of every script, the shared libs (`tools/lib/`), invariants, and gotchas. Reuse the shared libs; never duplicate MO2 process/ini/7-Zip logic.
 
 ## Architecture (canonical)
 
@@ -20,6 +21,7 @@ Skyrim Special Edition portable Mod Organizer 2 (MO2) instance, version-controll
 | Mod archives | `mo2/downloads/` | No |
 | Installed mods | `mo2/mods/` | No — restore via Nexus + manifest |
 | Manifest (Nexus IDs, versions, install notes) | `manifest/` | Yes |
+| Modding tools (LOOT, SSEEdit, BethINI Pie) | `mo2/tools/` | No — bootstrap via `tools/bootstrap-tools.ps1` from `manifest/tools.json` (ADR 0012) |
 | Root Builder data | `mo2/mods/Root Builder/` + profiles | Partial — see Root Builder docs |
 | Agent/docs | `AGENTS.md`, `docs/` | Yes |
 
@@ -32,8 +34,9 @@ Skyrim Special Edition portable Mod Organizer 2 (MO2) instance, version-controll
 5. Configure Nexus API key (user provides) → `tools/nexus-auth.ps1` / env `NEXUS_API_KEY`.
 6. `pwsh -File tools/restore-mods.ps1` (downloads from `manifest/`).
 7. `pwsh -File tools/install-m1.ps1` (stages mods into `mo2/mods`, injects the SKSE launch entry with correct paths).
-8. Open `mo2/ModOrganizer.exe`, confirm game path, enable profile. Root Builder autobuild/redirect default on.
-9. Launch via SKSE executable through MO2 only.
+8. `pwsh -File tools/bootstrap-tools.ps1` (downloads LOOT/SSEEdit/BethINI Pie into `mo2/tools`, registers them as MO2 executables).
+9. Open `mo2/ModOrganizer.exe`, confirm game path, enable profile. Root Builder autobuild/redirect default on.
+10. Launch via SKSE executable through MO2 only.
 
 Full runbook: `docs/RESTORE.md`.
 
@@ -41,7 +44,8 @@ Full runbook: `docs/RESTORE.md`.
 
 **M0 — Foundation:** MO2 portable + git + docs + clean-root strategy.  
 **M1 — Essentials:** Root Builder + SKSE (Nexus 30379) + Address Library + SkyUI. Nexus-first metadata (ADR 0005).  
-**Later:** BethINI Pie for optimal profile INIs (ignore missing-INI warning for now).
+**Tooling:** LOOT + SSEEdit + BethINI Pie installed to `mo2/tools`, run through MO2 (ADR 0012).  
+**Later:** Use BethINI Pie to write optimal profile INIs (ignore missing-INI warning until then).
 
 ## Operating style
 
@@ -50,6 +54,9 @@ Full runbook: `docs/RESTORE.md`.
 - Prefer Nexus + `meta.ini` URL/modid (ADR 0005). Profile INIs: BethINI Pie later.
 - **Never pin Nexus `fileId` / archive filenames** in scripts. Detect Skyrim runtime, list Nexus files, pick latest compatible MAIN (ADR 0006 / `tools/lib/Ebonveil.Nexus.ps1`).
 - **`meta.ini` `gameName` = game SHORT name `SkyrimSE`** (not the display "Skyrim Special Edition"), else MO2 shows "different game" (ADR 0008). Nexus API domain stays `skyrimspecialedition`.
+- **Never edit `ModOrganizer.ini` or a profile's `modlist.txt`/`plugins.txt`/`loadorder.txt` while MO2 runs** — MO2 reads them only at startup and rewrites (clobbers) them on exit (ADR 0013). Apply edits while it's closed: `pwsh -Command "& ./tools/restart-mo2.ps1 -Between { ./tools/bootstrap-tools.ps1 }"`, or use a script's `-RestartMo2` switch. Config-editing scripts refuse to run when MO2 is up.
+- **A real 7-Zip is required** (`winget install --id 7zip.7zip -e`); the WindowsApps `7z.exe` alias silently fails extraction. Scripts use shared `Find-7Zip` which skips it (ADR 0013).
+- **Place every installed mod under its MO2 separator** matching `manifest` `category` via `Add-Mo2ModToModlist` / `Update-Mo2ModlistPlacements`. Separator order: `manifest/separators.json` (ADR 0014).
 
 ## Decision log
 

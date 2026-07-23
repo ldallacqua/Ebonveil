@@ -1,0 +1,37 @@
+{
+  "$schema": "./tools.schema.json",
+  "notes": "External modding tools run THROUGH MO2 (custom executables). Binaries are bootstrapped into mo2/tools (gitignored), never committed. See ADR 0012.",
+  "installDir": "mo2/tools",
+  "tools": [
+    {
+      "id": "loot",
+      "name": "LOOT",
+      "source": "github",
+      "github": { "repo": "loot/loot", "assetMatch": "win64\\.7z$" },
+      "exe": "LOOT.exe",
+      "mo2Executable": {
+        "title": "LOOT",
+        "args": "--game=\"Skyrim Special Edition\""
+      },
+      "notes": "Load Order Optimisation Tool. Run through MO2 so it reads the virtual load order."
+    },
+    {
+      "id": "sseedit",
+      "name": "SSEEdit (xEdit)",
+      "source": "nexus",
+      "nexus": { "domain": "skyrimspecialedition", "modId": 164 },
+      "exe": "SSEEdit.exe",
+      "mo2Executable": { "title": "SSEEdit" },
+      "notes": "xEdit for Skyrim SE. Must run through MO2 to see the virtual Data folder."
+    },
+    {
+      "id": "bethini-pie",
+      "name": "BethINI Pie",
+      "source": "nexus",
+      "nexus": { "domain": "site", "modId": 631 },
+      "exe": "Bethini.exe",
+      "mo2Executable": { "title": "BethINI Pie" },
+      "notes": "Universal Bethesda INI editor. Run through MO2 so edits hit the active profile INIs."
+    }
+  ]
+}

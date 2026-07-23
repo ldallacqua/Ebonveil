@@ -1,0 +1,17 @@
+{
+  "$schema": "./separators.schema.json",
+  "notes": "MO2 left-pane separators (folders named '<Name>_separator'). Order is top→bottom in modlist.txt (highest priority first). Mods are placed under the separator matching their manifest category (ADR 0014).",
+  "order": [
+    "User Interface",
+    "Frameworks & Resources",
+    "Script Extender & Core",
+    "Tooling",
+    "Graphics",
+    "Immersion",
+    "Gameplay",
+    "Romance",
+    "NSFW",
+    "Patches & Compatibility",
+    "Other Mods"
+  ]
+}

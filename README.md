@@ -12,6 +12,7 @@ pwsh -File .\tools\configure-mo2.ps1
 pwsh -File .\tools\nexus-auth.ps1   # when ready
 pwsh -File .\tools\restore-mods.ps1
 pwsh -File .\tools\install-m1.ps1
+pwsh -File .\tools\bootstrap-tools.ps1   # LOOT, SSEEdit, BethINI Pie -> mo2/tools
 .\mo2\ModOrganizer.exe
 ```
 

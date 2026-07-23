@@ -13,7 +13,7 @@
         "properties": {
           "id": { "type": "string" },
           "name": { "type": "string" },
-          "category": { "type": "string", "description": "Display category for the web showcase." },
+          "category": { "type": "string", "description": "MO2 separator name + web showcase category (ADR 0014)." },
           "match": { "type": "string", "description": "Case-insensitive key linking a modlist.txt entry to this catalog record." },
           "source": { "enum": ["nexus", "silverlock", "github", "manual"] },
           "install": { "enum": ["mo2-mod", "root-builder-or-root-mod", "manual"] },
