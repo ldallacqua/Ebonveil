@@ -37,6 +37,24 @@ $targets = @($manifest.mods | Where-Object { $_.milestone -eq $Milestone -or $Mi
 Write-Host "Restoring milestone $Milestone ($($targets.Count) entries)"
 
 $resolved = @{}
+if (Test-Path -LiteralPath $ResolvedPath) {
+  try {
+    $prev = Get-Content -LiteralPath $ResolvedPath -Raw | ConvertFrom-Json
+    foreach ($p in $prev.PSObject.Properties) {
+      $resolved[$p.Name] = @{
+        modId          = $p.Value.modId
+        domain         = $p.Value.domain
+        fileId         = $p.Value.fileId
+        fileName       = $p.Value.fileName
+        version        = $p.Value.version
+        skyrimVersion  = $p.Value.skyrimVersion
+        skyrimPlatform = $p.Value.skyrimPlatform
+        url            = $p.Value.url
+        archivePath    = $p.Value.archivePath
+      }
+    }
+  } catch { }
+}
 
 foreach ($mod in $targets) {
   Write-Host "`n=== $($mod.name) [$($mod.id)] ==="

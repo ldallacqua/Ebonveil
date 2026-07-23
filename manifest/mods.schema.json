@@ -21,7 +21,12 @@
           "milestone": { "type": "string" },
           "requires": {
             "type": "array",
-            "description": "Optional curated dependency ids (manifest mod ids or nexus modIds). Hints from GraphQL may be promoted here after review (ADR 0015).",
+            "description": "Optional curated dependency ids (manifest mod ids). Hints from GraphQL may be promoted here after review (ADR 0015).",
+            "items": { "type": "string" }
+          },
+          "plugins": {
+            "type": "array",
+            "description": "Plugin filenames to enable in plugins.txt / loadorder.txt after install.",
             "items": { "type": "string" }
           }
         }

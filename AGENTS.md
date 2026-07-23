@@ -45,6 +45,7 @@ Full runbook: `docs/RESTORE.md`.
 **M0 — Foundation:** MO2 portable + git + docs + clean-root strategy.  
 **M1 — Essentials:** Root Builder + SKSE (Nexus 30379) + Address Library + SkyUI. Nexus-first metadata (ADR 0005).  
 **Tooling:** LOOT + SSEEdit + BethINI Pie installed to `mo2/tools`, run through MO2 (ADR 0012).  
+**M2 — Starts & patches:** USSEP + Alternate Start (Live Another Life); deps via probe hints → manifest (ADR 0015).  
 **Later:** Use BethINI Pie to write optimal profile INIs (ignore missing-INI warning until then).
 
 ## Operating style

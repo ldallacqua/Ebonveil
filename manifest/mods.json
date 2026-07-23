@@ -84,6 +84,49 @@
       "required": true,
       "milestone": "M1",
       "notes": "Latest MAIN. Requires SKSE. Enable SkyUI_SE.esp."
+    },
+    {
+      "id": "ussep",
+      "name": "Unofficial Skyrim Special Edition Patch",
+      "category": "Patches & Compatibility",
+      "match": "USSEP",
+      "source": "nexus",
+      "nexus": {
+        "domain": "skyrimspecialedition",
+        "modId": 266,
+        "url": "https://www.nexusmods.com/skyrimspecialedition/mods/266"
+      },
+      "selection": {
+        "platformAware": false,
+        "matchGameVersion": false
+      },
+      "install": "mo2-mod",
+      "plugins": ["Unofficial Skyrim Special Edition Patch.esp"],
+      "required": true,
+      "milestone": "M2",
+      "notes": "Foundational bugfix. Declared dependency of Alternate Start (ADR 0015). Load early (after DLC)."
+    },
+    {
+      "id": "alternate-start-lal",
+      "name": "Alternate Start - Live Another Life",
+      "category": "Gameplay",
+      "match": "Alternate Start",
+      "source": "nexus",
+      "nexus": {
+        "domain": "skyrimspecialedition",
+        "modId": 272,
+        "url": "https://www.nexusmods.com/skyrimspecialedition/mods/272"
+      },
+      "selection": {
+        "platformAware": false,
+        "matchGameVersion": false
+      },
+      "install": "mo2-mod",
+      "plugins": ["Alternate Start - Live Another Life.esp"],
+      "requires": ["ussep"],
+      "required": true,
+      "milestone": "M2",
+      "notes": "Alt start; Nexus-declared req = USSEP only (no SKSE)."
     }
   ]
 }

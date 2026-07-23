@@ -101,6 +101,11 @@ Stop this instance's MO2, optionally run `-Between` **while it's down** (the saf
 apply ini/profile edits), then relaunch. `-NoStart` stops only. Pass `-Between` via
 `pwsh -Command` (a scriptblock can't go through `-File`). (ADR 0013)
 
+### `install-m2.ps1 [-Milestone M2] [-RestartMo2]`
+Stage M2 mods (USSEP, Alternate Start) from downloads into `mo2/mods`, place under
+separators, enable declared `plugins`. Guards on running MO2. Run after
+`restore-mods.ps1 -Milestone M2`.
+
 ### `probe-mod-requirements.ps1 -ModId <id> [-Recurse] [-Json] [-OutFile path]`
 Fetch author-declared Nexus requirements via GraphQL v2 and compare to the manifest /
 local downloads. **Hints only** (ADR 0015) — does not install. `-Json` / `-OutFile`
