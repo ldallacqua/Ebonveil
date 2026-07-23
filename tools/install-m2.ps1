@@ -163,7 +163,8 @@ foreach ($mod in $ordered) {
 if ($placements.Count -gt 0) {
   Update-Mo2ModlistPlacements -ProfileDir $ProfileDir -ModsDir $Mods -RepoRoot $RepoRoot -Placements $placements
 }
-Sync-Mo2ManagedSeparators -ProfileDir $ProfileDir -ModsDir $Mods -RepoRoot $RepoRoot
+# Splice separators into the canonical stack (Bug Fixes early, Patches late) — ADR 0016.
+Rebuild-Mo2ModlistStack -ProfileDir $ProfileDir -ModsDir $Mods -RepoRoot $RepoRoot
 if ($allPlugins.Count -gt 0) { Enable-Plugins -PluginNames $allPlugins }
 
 Write-Host "=== milestone $Milestone install complete ==="

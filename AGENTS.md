@@ -60,6 +60,7 @@ Full runbook: `docs/RESTORE.md`.
 - **A real 7-Zip is required** (`winget install --id 7zip.7zip -e`); the WindowsApps `7z.exe` alias silently fails extraction. Scripts use shared `Find-7Zip` which skips it (ADR 0013).
 - **Place every installed mod under its MO2 separator** matching `manifest` `category` — insert the mod **before** the separator line via `Add-Mo2ModToModlist` / `Update-Mo2ModlistPlacements`. Use `Sync-Mo2ManagedSeparators` for DLC/CC. Order: `manifest/separators.json` (ADR 0014).
 - **Nexus requirements = hints** (`tools/probe-mod-requirements.ps1`, ADR 0015). Manifest is source of truth; never auto-install a GraphQL dependency tree without confirming / adding to `manifest/mods.json`. JSON output is for a future UI + install AI.
+- **Context-aware load order** (ADR 0016 + `.cursor/skills/skyrim-modding`): read the full list before adds; place under the correct separator tier (Bug Fixes early, Patches late); `Rebuild-Mo2ModlistStack` after changes; run `review-load-order.ps1` and report risks. MO2 does not export conflicts — use loose scan + LOOT/SSEEdit/UI.
 
 ## Decision log
 

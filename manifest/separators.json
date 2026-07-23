@@ -1,6 +1,6 @@
 {
   "$schema": "./separators.schema.json",
-  "notes": "MO2 left-pane separators. Order = modlist.txt top→bottom = HIGHEST priority first = BOTTOM of the UI (Overwrite is last). A separator owns mods listed BEFORE it in the file. UI top→bottom is the reverse: Official DLC → Creation Club → … → User Interface → Overwrite. See ADR 0014.",
+  "notes": "modlist.txt order = HIGHEST priority first = BOTTOM of the left pane (Overwrite last). A separator owns mods listed BEFORE it. UI top→bottom is the reverse of this array's managed tail. Canonical stack (ADR 0016 / .cursor/skills/skyrim-modding): Official DLC → CC → Bug Fixes → Script Extender → Frameworks → UI → Graphics → Immersion/Gameplay → Romance/NSFW → Patches & Compatibility → Overwrite.",
   "order": [
     "Patches & Compatibility",
     "NSFW",
@@ -13,6 +13,7 @@
     "Script Extender & Core",
     "Tooling",
     "Other Mods",
+    "Bug Fixes",
     "Creation Club",
     "Official DLC"
   ]

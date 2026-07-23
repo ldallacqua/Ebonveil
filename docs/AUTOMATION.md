@@ -22,10 +22,14 @@ behind these scripts live in `docs/decisions/` (ADRs); this file is the operatio
 5. **Never pin Nexus `fileId` / archive names.** Select latest compatible MAIN dynamically.
    (ADR 0006)
 6. **Place mods under MO2 separators by `category`.** Insert the mod **before** its
-   separator line (`Add-Mo2ModToModlist`). Order + DLC/CC groups: `manifest/separators.json`.
-   Call `Sync-Mo2ManagedSeparators` for managed DLC/CC. (ADR 0014)
+   separator line. **Rebuild the stack** (`Rebuild-Mo2ModlistStack` /
+   `review-load-order.ps1 -RebuildStack`) so foundation tiers (Bug Fixes) stay early and
+   Patches stay late — never append a nonsensical separator at the bottom. (ADR 0014/0016)
 7. **Nexus requirements are hints.** Probe with `tools/probe-mod-requirements.ps1`;
    manifest stays source of truth. Do not auto-install from GraphQL alone. (ADR 0015)
+8. **Review load order when adding mods.** Use `tools/review-load-order.ps1` (+ `-ScanConflicts`).
+   Report Critical / Likely / Watch. MO2 has no conflict export file — loose scan only.
+   Skill: `.cursor/skills/skyrim-modding`. (ADR 0016)
 
 ## Shared libraries (`tools/lib/`)
 
@@ -45,7 +49,8 @@ Dot-source, don't duplicate. If you need MO2 process/ini/7-Zip behavior, use the
 | `Ensure-Mo2Separator -ModsDir -Name` | Create empty `<Name>_separator` mod folder + meta.ini. |
 | `Add-Mo2ModToModlist -ProfileDir -ModsDir -ModName -Separator [-RepoRoot]` | Place/enable a mod **before** its separator line (MO2 nests higher-priority mods under the separator). (ADR 0014) |
 | `Update-Mo2ModlistPlacements -ProfileDir -ModsDir -Placements [-RepoRoot]` | Batch place mods: each item `{ Name; Separator }`. |
-| `Sync-Mo2ManagedSeparators -ProfileDir -ModsDir [-RepoRoot]` | Put `*Creation Club:*` / `*DLC:*` under Creation Club / Official DLC separators. |
+| `Rebuild-Mo2ModlistStack -ProfileDir -ModsDir [-RepoRoot]` | Rebuild curated modlist so separator blocks follow `separators.json` + manifest categories (ADR 0016). |
+| `Scan-Mo2LooseFileConflicts` | Loose-file conflict approx (last modlist entry wins). Not BSA/BA2. |
 
 ### `Ebonveil.Nexus.ps1`
 | Function | Purpose |
@@ -105,6 +110,11 @@ apply ini/profile edits), then relaunch. `-NoStart` stops only. Pass `-Between` 
 Stage M2 mods (USSEP, Alternate Start) from downloads into `mo2/mods`, place under
 separators, enable declared `plugins`. Guards on running MO2. Run after
 `restore-mods.ps1 -Milestone M2`.
+
+### `review-load-order.ps1 [-RebuildStack] [-ScanConflicts] [-RestartMo2] [-Json] [-OutFile]`
+Load-order reviewer: Critical/Likely/Watch findings, separator stack preview, optional
+loose-file conflict scan. `-RebuildStack` rewrites modlist from canonical separator order
+(ADR 0016). Aligns with `.cursor/skills/skyrim-modding`.
 
 ### `probe-mod-requirements.ps1 -ModId <id> [-Recurse] [-Json] [-OutFile path]`
 Fetch author-declared Nexus requirements via GraphQL v2 and compare to the manifest /
