@@ -1,0 +1,160 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Ebonveil — dark fantasy palette.
+  ebony night + arcane violet veil + warm ember gold.
+  The app is always dark; :root and .dark share the same tokens.
+*/
+:root {
+  --radius: 0.85rem;
+
+  --background: oklch(0.135 0.018 292);
+  --foreground: oklch(0.92 0.012 300);
+
+  --card: oklch(0.175 0.022 292);
+  --card-foreground: oklch(0.93 0.012 300);
+
+  --popover: oklch(0.165 0.022 292);
+  --popover-foreground: oklch(0.93 0.012 300);
+
+  --primary: oklch(0.68 0.19 305);
+  --primary-foreground: oklch(0.99 0.003 300);
+
+  --secondary: oklch(0.26 0.03 296);
+  --secondary-foreground: oklch(0.92 0.012 300);
+
+  --muted: oklch(0.235 0.022 294);
+  --muted-foreground: oklch(0.7 0.02 300);
+
+  --accent: oklch(0.82 0.13 84);
+  --accent-foreground: oklch(0.2 0.03 286);
+
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 20);
+
+  --success: oklch(0.72 0.16 155);
+
+  --border: oklch(0.34 0.025 296 / 0.55);
+  --input: oklch(0.34 0.025 296 / 0.5);
+  --ring: oklch(0.68 0.19 305);
+
+  --ember: oklch(0.82 0.13 84);
+  --arcane: oklch(0.68 0.19 305);
+  --frost: oklch(0.72 0.11 220);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ember: var(--ember);
+  --color-arcane: var(--arcane);
+  --color-frost: var(--frost);
+
+  --font-display: "Cinzel", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    /* layered arcane glow backdrop */
+    background-image:
+      radial-gradient(60rem 60rem at 15% -10%, oklch(0.68 0.19 305 / 0.16), transparent 60%),
+      radial-gradient(50rem 50rem at 95% 0%, oklch(0.82 0.13 84 / 0.1), transparent 55%),
+      radial-gradient(70rem 70rem at 50% 120%, oklch(0.72 0.11 220 / 0.1), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: oklch(0.68 0.19 305 / 0.35);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .text-gradient {
+    background: linear-gradient(100deg, var(--accent), var(--primary) 55%, var(--frost));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glass {
+    background: linear-gradient(
+      160deg,
+      oklch(0.22 0.025 293 / 0.75),
+      oklch(0.15 0.02 292 / 0.65)
+    );
+    backdrop-filter: blur(12px);
+  }
+
+  .ring-glow {
+    box-shadow:
+      0 0 0 1px oklch(0.68 0.19 305 / 0.25),
+      0 12px 40px -12px oklch(0.68 0.19 305 / 0.35);
+  }
+
+  .hairline {
+    border: 1px solid oklch(0.5 0.03 296 / 0.25);
+  }
+}
+
+/* thin arcane scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0.04 300 / 0.5);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0.08 302 / 0.7);
+  background-clip: padding-box;
+}

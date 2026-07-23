@@ -7,6 +7,8 @@
     {
       "id": "root-builder",
       "name": "Root Builder",
+      "category": "Tooling",
+      "match": "Root Builder",
       "source": "nexus",
       "nexus": {
         "domain": "skyrimspecialedition",
@@ -25,6 +27,8 @@
     {
       "id": "skse64",
       "name": "Skyrim Script Extender (SKSE64)",
+      "category": "Script Extender & Core",
+      "match": "SKSE64",
       "source": "nexus",
       "nexus": {
         "domain": "skyrimspecialedition",
@@ -43,6 +47,8 @@
     {
       "id": "address-library",
       "name": "Address Library for SKSE Plugins",
+      "category": "Frameworks & Resources",
+      "match": "Address Library",
       "source": "nexus",
       "nexus": {
         "domain": "skyrimspecialedition",
@@ -62,6 +68,8 @@
     {
       "id": "skyui",
       "name": "SkyUI",
+      "category": "User Interface",
+      "match": "SkyUI",
       "source": "nexus",
       "nexus": {
         "domain": "skyrimspecialedition",
