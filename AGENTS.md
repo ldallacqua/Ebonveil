@@ -50,6 +50,7 @@ Full runbook: `docs/RESTORE.md`.
 ## Operating style
 
 - **Do the work.** Downloads, installs, ini/modlist edits, packaging — agents execute when confident.
+- **Use the Nexus API key freely** when it is present (`secrets/nexus_api_key.txt` or `NEXUS_API_KEY`): probes, file lists, requirement lookups (GraphQL v2), and downloads/installs. That is why the key exists — do not ask permission to use it. Still never commit it or paste it into chat/logs.
 - **Prompt only when not confident**, when Nexus/browser CAPTCHA/UAC blocks automation, or before destructive Steam-root changes without rollback.
 - Prefer Nexus + `meta.ini` URL/modid (ADR 0005). Profile INIs: BethINI Pie later.
 - **Never pin Nexus `fileId` / archive filenames** in scripts. Detect Skyrim runtime, list Nexus files, pick latest compatible MAIN (ADR 0006 / `tools/lib/Ebonveil.Nexus.ps1`).
@@ -57,6 +58,7 @@ Full runbook: `docs/RESTORE.md`.
 - **Never edit `ModOrganizer.ini` or a profile's `modlist.txt`/`plugins.txt`/`loadorder.txt` while MO2 runs** — MO2 reads them only at startup and rewrites (clobbers) them on exit (ADR 0013). Apply edits while it's closed: `pwsh -Command "& ./tools/restart-mo2.ps1 -Between { ./tools/bootstrap-tools.ps1 }"`, or use a script's `-RestartMo2` switch. Config-editing scripts refuse to run when MO2 is up.
 - **A real 7-Zip is required** (`winget install --id 7zip.7zip -e`); the WindowsApps `7z.exe` alias silently fails extraction. Scripts use shared `Find-7Zip` which skips it (ADR 0013).
 - **Place every installed mod under its MO2 separator** matching `manifest` `category` — insert the mod **before** the separator line via `Add-Mo2ModToModlist` / `Update-Mo2ModlistPlacements`. Use `Sync-Mo2ManagedSeparators` for DLC/CC. Order: `manifest/separators.json` (ADR 0014).
+- **Nexus requirements = hints** (`tools/probe-mod-requirements.ps1`, ADR 0015). Manifest is source of truth; never auto-install a GraphQL dependency tree without confirming / adding to `manifest/mods.json`. JSON output is for a future UI + install AI.
 
 ## Decision log
 

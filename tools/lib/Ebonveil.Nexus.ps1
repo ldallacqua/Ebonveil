@@ -95,7 +95,7 @@ function Select-NexusFileForRuntime {
   )
 
   if ($Mod.nexus.fileId) {
-    Write-Warning "Mod $($Mod.id) has nexus.fileId=$($Mod.nexus.fileId) — discouraged; prefer dynamic selection."
+    Write-Warning "Mod $($Mod.id) has nexus.fileId=$($Mod.nexus.fileId) -- discouraged; prefer dynamic selection."
     $pinned = @($FileList | Where-Object { $_.file_id -eq [int]$Mod.nexus.fileId } | Select-Object -First 1)
     if (-not $pinned) { throw "Pinned fileId $($Mod.nexus.fileId) not found for $($Mod.id)" }
     return $pinned[0]
@@ -189,4 +189,259 @@ function Write-ResolvedManifest {
     [hashtable]$Map
   )
   ($Map | ConvertTo-Json -Depth 6) | Set-Content -Path $Path -Encoding UTF8
+}
+
+# --- GraphQL v2 (requirements / metadata) ------------------------------------
+# REST v1 has no requirements. GraphQL exposes author-declared deps (ADR 0015).
+# Treat as HINTS only -- incomplete / no hard-vs-optional; manifest stays SoT.
+
+function Get-NexusSkyrimSeGameId {
+  # Nexus internal game id for Skyrim Special Edition (GraphQL mod(modId, gameId)).
+  return '1704'
+}
+
+function Invoke-NexusGraphQl {
+  param(
+    [Parameter(Mandatory)][string]$Query,
+    [hashtable]$Variables = $null,
+    [string]$ApiKey
+  )
+  $payload = @{ query = $Query }
+  if ($Variables) { $payload.variables = $Variables }
+  $json = $payload | ConvertTo-Json -Depth 8 -Compress
+  $headers = @{
+    Accept       = 'application/json'
+    'User-Agent' = 'EbonveilRestore/0.3 (MO2 portable; personal use)'
+  }
+  if ($ApiKey) { $headers.apikey = $ApiKey }
+  # WebRequest avoids some PowerShell Invoke-RestMethod body quirks on Windows.
+  $resp = Invoke-WebRequest -Uri 'https://api.nexusmods.com/v2/graphql' -Method Post `
+    -ContentType 'application/json; charset=utf-8' `
+    -Body ([Text.Encoding]::UTF8.GetBytes($json)) `
+    -Headers $headers -UseBasicParsing
+  $parsed = $resp.Content | ConvertFrom-Json
+  if ($parsed.errors) {
+    $msg = ($parsed.errors | ForEach-Object { $_.message }) -join '; '
+    throw "Nexus GraphQL error: $msg"
+  }
+  return $parsed.data
+}
+
+function Get-NexusModRequirements {
+  <#
+  .SYNOPSIS
+    Fetch author-declared Nexus + DLC requirements for a mod (GraphQL v2).
+  .NOTES
+    Hints only (ADR 0015). Does not recurse -- use Get-NexusModRequirementTree.
+  #>
+  param(
+    [Parameter(Mandatory)][int]$ModId,
+    [string]$GameId = (Get-NexusSkyrimSeGameId),
+    [string]$ApiKey,
+    [int]$Count = 50
+  )
+  $query = @'
+query ($modId: ID!, $gameId: ID!, $count: Int!) {
+  mod(modId: $modId, gameId: $gameId) {
+    name
+    summary
+    legacyModRequirementsEnabled
+    modRequirements {
+      nexusRequirements(count: $count) {
+        totalCount
+        nodes {
+          modId
+          modName
+          url
+          notes
+          externalRequirement
+          gameId
+        }
+      }
+      dlcRequirements {
+        notes
+        gameExpansion { name id }
+      }
+    }
+  }
+}
+'@
+  $data = Invoke-NexusGraphQl -Query $query -ApiKey $ApiKey -Variables @{
+    modId  = [string]$ModId
+    gameId = [string]$GameId
+    count  = $Count
+  }
+  if (-not $data.mod) {
+    throw "Nexus GraphQL returned no mod for modId=$ModId gameId=$GameId"
+  }
+  $mod = $data.mod
+  $nexus = @($mod.modRequirements.nexusRequirements.nodes | ForEach-Object {
+      [PSCustomObject]@{
+        modId               = [int]$_.modId
+        modName             = [string]$_.modName
+        gameId              = [string]$_.gameId
+        externalRequirement = [bool]$_.externalRequirement
+        notes               = [string]$_.notes
+        url                 = [string]$_.url
+      }
+    })
+  $dlc = @($mod.modRequirements.dlcRequirements | ForEach-Object {
+      [PSCustomObject]@{
+        name  = [string]$_.gameExpansion.name
+        id    = [string]$_.gameExpansion.id
+        notes = [string]$_.notes
+      }
+    })
+  [PSCustomObject]@{
+    modId                          = $ModId
+    gameId                         = $GameId
+    name                           = [string]$mod.name
+    summary                        = [string]$mod.summary
+    legacyModRequirementsEnabled   = [bool]$mod.legacyModRequirementsEnabled
+    nexusRequirements              = $nexus
+    dlcRequirements                = $dlc
+  }
+}
+
+function Get-NexusModRequirementTree {
+  <#
+  .SYNOPSIS
+    Walk declared Nexus requirements recursively (BFS). Caps depth/nodes.
+  .NOTES
+    Skips externalRequirement nodes for recursion (no Nexus modId to follow).
+  #>
+  param(
+    [Parameter(Mandatory)][int]$ModId,
+    [string]$GameId = (Get-NexusSkyrimSeGameId),
+    [string]$ApiKey,
+    [int]$MaxDepth = 4,
+    [int]$MaxNodes = 40
+  )
+  $visited = [System.Collections.Generic.HashSet[int]]::new()
+  $queue = [System.Collections.Generic.Queue[object]]::new()
+  $nodes = [System.Collections.Generic.List[object]]::new()
+
+  $root = Get-NexusModRequirements -ModId $ModId -GameId $GameId -ApiKey $ApiKey
+  [void]$visited.Add($ModId)
+  $nodes.Add([PSCustomObject]@{
+      modId               = $root.modId
+      name                = $root.name
+      depth               = 0
+      parentModId         = $null
+      externalRequirement = $false
+      notes               = ''
+      url                 = ''
+      dlcRequirements     = $root.dlcRequirements
+      isRoot              = $true
+    })
+  foreach ($req in $root.nexusRequirements) {
+    $queue.Enqueue([PSCustomObject]@{ ModId = $req.modId; Parent = $ModId; Depth = 1; Hint = $req })
+  }
+
+  while ($queue.Count -gt 0 -and $nodes.Count -lt $MaxNodes) {
+    $item = $queue.Dequeue()
+    if ($item.Depth -gt $MaxDepth) { continue }
+    if ($item.Hint.externalRequirement) {
+      $nodes.Add([PSCustomObject]@{
+          modId               = $item.Hint.modId
+          name                = $item.Hint.modName
+          depth               = $item.Depth
+          parentModId         = $item.Parent
+          externalRequirement = $true
+          notes               = $item.Hint.notes
+          url                 = $item.Hint.url
+          dlcRequirements     = @()
+          isRoot              = $false
+        })
+      continue
+    }
+    if (-not $visited.Add([int]$item.ModId)) { continue }
+
+    $info = Get-NexusModRequirements -ModId $item.ModId -GameId $GameId -ApiKey $ApiKey
+    $nodes.Add([PSCustomObject]@{
+        modId               = $info.modId
+        name                = $info.name
+        depth               = $item.Depth
+        parentModId         = $item.Parent
+        externalRequirement = $false
+        notes               = $item.Hint.notes
+        url                 = $item.Hint.url
+        dlcRequirements     = $info.dlcRequirements
+        isRoot              = $false
+      })
+    foreach ($req in $info.nexusRequirements) {
+      if ($nodes.Count + $queue.Count -ge $MaxNodes) { break }
+      $queue.Enqueue([PSCustomObject]@{ ModId = $req.modId; Parent = $info.modId; Depth = $item.Depth + 1; Hint = $req })
+    }
+  }
+
+  [PSCustomObject]@{
+    root  = $root
+    nodes = @($nodes)
+  }
+}
+
+function Compare-NexusRequirementsToManifest {
+  <#
+  .SYNOPSIS
+    Classify declared requirement modIds against manifest/mods.json + local presence.
+  #>
+  param(
+    [Parameter(Mandatory)]$RequirementNodes,
+    [Parameter(Mandatory)][string]$RepoRoot
+  )
+  $manifestPath = Join-Path $RepoRoot 'manifest\mods.json'
+  $manifestIds = @{}
+  if (Test-Path -LiteralPath $manifestPath) {
+    $m = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    foreach ($mod in @($m.mods)) {
+      if ($mod.nexus -and $mod.nexus.modId) {
+        $manifestIds[[int]$mod.nexus.modId] = [string]$mod.id
+      }
+    }
+  }
+  $downloads = Join-Path $RepoRoot 'mo2\downloads'
+  $modsDir = Join-Path $RepoRoot 'mo2\mods'
+
+  $rows = @()
+  foreach ($n in @($RequirementNodes)) {
+    if ($n.isRoot) { continue }
+    if ($n.externalRequirement) {
+      $rows += [PSCustomObject]@{
+        modId = $n.modId; name = $n.name; depth = $n.depth
+        inManifest = $false; manifestId = $null
+        downloaded = $false; installedMeta = $false
+        external = $true; status = 'external'
+      }
+      continue
+    }
+    $mid = [int]$n.modId
+    $inMan = $manifestIds.ContainsKey($mid)
+    $dl = $null
+    if (Test-Path $downloads) { $dl = Find-DownloadByModId -DownloadsDir $downloads -ModId $mid }
+    $installed = $false
+    if (Test-Path $modsDir) {
+      $installed = [bool](Get-ChildItem -LiteralPath $modsDir -Directory -EA SilentlyContinue |
+        Where-Object {
+          $meta = Join-Path $_.FullName 'meta.ini'
+          (Test-Path $meta) -and ((Get-Content $meta -Raw) -match "(?m)^modid=$mid\s*$")
+        } | Select-Object -First 1)
+    }
+    $status = if ($inMan -and ($dl -or $installed)) { 'covered' }
+              elseif ($inMan) { 'in-manifest' }
+              elseif ($dl -or $installed) { 'local-only' }
+              else { 'missing' }
+    $rows += [PSCustomObject]@{
+      modId        = $mid
+      name         = $n.name
+      depth        = $n.depth
+      inManifest   = $inMan
+      manifestId   = if ($inMan) { $manifestIds[$mid] } else { $null }
+      downloaded   = [bool]$dl
+      installedMeta = $installed
+      external     = $false
+      status       = $status
+    }
+  }
+  return $rows
 }

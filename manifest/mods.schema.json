@@ -18,7 +18,12 @@
           "source": { "enum": ["nexus", "silverlock", "github", "manual"] },
           "install": { "enum": ["mo2-mod", "root-builder-or-root-mod", "manual"] },
           "required": { "type": "boolean" },
-          "milestone": { "type": "string" }
+          "milestone": { "type": "string" },
+          "requires": {
+            "type": "array",
+            "description": "Optional curated dependency ids (manifest mod ids or nexus modIds). Hints from GraphQL may be promoted here after review (ADR 0015).",
+            "items": { "type": "string" }
+          }
         }
       }
     }

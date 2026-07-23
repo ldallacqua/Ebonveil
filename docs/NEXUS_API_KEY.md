@@ -35,11 +35,14 @@ $env:NEXUS_API_KEY = 'PASTE_KEY_HERE'
 
 ## Then tell the agent
 
-“Key ready — run restore.”
+“Key ready — run restore.” (or just leave the file in place.)
 
-We will download M1 into `mo2\downloads\` via API (Root Builder, SKSE 30379, Address Library, SkyUI).
+Agents **should use this key without asking** for Nexus probes, downloads, and installs whenever the file/env is present. Do not treat API use as something that needs per-request approval.
+
+We will download M1 into `mo2\downloads\` via API (Root Builder, SKSE 30379, Address Library, SkyUI). GraphQL v2 (`api.nexusmods.com/v2/graphql`) is also fair game for metadata such as declared mod requirements.
 
 ## Notes
 
 - **Premium** strongly recommended: API CDN `download_link` works cleanly. Non-premium often cannot pull files via API (manual/nxm wait).
 - MO2 SSO stays for GUI; this key is only for automation.
+- Never commit the key. Never echo it into chat, logs, or commit messages.

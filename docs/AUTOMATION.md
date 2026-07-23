@@ -24,6 +24,8 @@ behind these scripts live in `docs/decisions/` (ADRs); this file is the operatio
 6. **Place mods under MO2 separators by `category`.** Insert the mod **before** its
    separator line (`Add-Mo2ModToModlist`). Order + DLC/CC groups: `manifest/separators.json`.
    Call `Sync-Mo2ManagedSeparators` for managed DLC/CC. (ADR 0014)
+7. **Nexus requirements are hints.** Probe with `tools/probe-mod-requirements.ps1`;
+   manifest stays source of truth. Do not auto-install from GraphQL alone. (ADR 0015)
 
 ## Shared libraries (`tools/lib/`)
 
@@ -49,7 +51,11 @@ Dot-source, don't duplicate. If you need MO2 process/ini/7-Zip behavior, use the
 | Function | Purpose |
 |----------|---------|
 | `Get-NexusApiKey -RepoRoot` | Key from `NEXUS_API_KEY` env or `secrets/nexus_api_key.txt`. (ADR 0010) |
-| `Invoke-NexusApi -Path -ApiKey` | GET against `api.nexusmods.com`. |
+| `Invoke-NexusApi -Path -ApiKey` | GET against REST `api.nexusmods.com` v1. |
+| `Invoke-NexusGraphQl -Query [-Variables] [-ApiKey]` | POST GraphQL v2 (requirements / rich metadata). |
+| `Get-NexusModRequirements -ModId [-GameId] [-ApiKey]` | Author-declared Nexus + DLC requirements (hints). (ADR 0015) |
+| `Get-NexusModRequirementTree -ModId [-MaxDepth]` | BFS walk of declared requirements. |
+| `Compare-NexusRequirementsToManifest` | Coverage vs `manifest/mods.json` + local downloads/meta.ini. |
 | `Get-SkyrimRuntime [-GamePath]` | Version + platform (Steam/GOG) from `SkyrimSE.exe`. |
 | `Select-NexusFileForRuntime -FileList -Mod -Runtime` | Pick latest MAIN, platform/version-aware. (ADR 0006) |
 | `Find-DownloadByModId -DownloadsDir -ModId [-NameExclude]` | Newest cached archive for a mod id. |
@@ -95,11 +101,24 @@ Stop this instance's MO2, optionally run `-Between` **while it's down** (the saf
 apply ini/profile edits), then relaunch. `-NoStart` stops only. Pass `-Between` via
 `pwsh -Command` (a scriptblock can't go through `-File`). (ADR 0013)
 
+### `probe-mod-requirements.ps1 -ModId <id> [-Recurse] [-Json] [-OutFile path]`
+Fetch author-declared Nexus requirements via GraphQL v2 and compare to the manifest /
+local downloads. **Hints only** (ADR 0015) — does not install. `-Json` / `-OutFile`
+emit `schemaVersion: 1` for a future web UI and install AI (`suggestedManifestAdds`,
+`coverage`, `caveats`).
+
 ### Fallback / deprecated
 - `fetch-skse.ps1` — Silverlock SKSE fallback; Nexus is preferred. (ADR 0005)
 - `install-skse-mod.ps1` — deprecated; warns and exits. Use `install-m1.ps1`.
 - `probe-game.ps1` — inspect the Skyrim install (version, loose files). Read-only.
 - `write-mo2-nexus-meta.ps1` — helper to write a mod `meta.ini` (`gameName=SkyrimSE`).
+
+## Future: UI + install AI
+
+A web UI will run these scripts and surface probe JSON; an install AI will propose
+manifest entries (category, separator, selection) from `suggestedManifestAdds` and
+related signals. Until then, agents use `probe-mod-requirements.ps1` + manual manifest
+edits. Do not change the JSON `schemaVersion: 1` contract lightly.
 
 ## Manifests (`manifest/`)
 
